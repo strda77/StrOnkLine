@@ -1,4 +1,3 @@
-
 extends CharacterBody3D
 
 signal ammo_changed(current: int, reserve: int)
