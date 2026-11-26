@@ -219,9 +219,15 @@ func fire_weapon() -> void:
     var result := get_world_3d().direct_space_state.intersect_ray(query)
 
     if not result.is_empty():
-        print("SHOT HIT: ", result.collider.name)
+        var hit_object = result.get("collider")
+
+        if hit_object.has_method("take_damage"):
+            hit_object.take_damage(25)
+            print("TARGET HIT - 25 DAMAGE")
+        else:
+            print("HIT: ", hit_object.name)
     else:
-        print("SHOT FIRED")
+        print("SHOT MISSED")
 
 
 func reload_weapon() -> void:
