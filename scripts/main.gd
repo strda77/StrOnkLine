@@ -105,6 +105,26 @@ func create_mobile_controls() -> void:
     layer.add_child(jump)
     jump.pressed.connect(player.request_jump)
 
+    var sprint := Button.new()
+    sprint.text = "RUN"
+    sprint.custom_minimum_size = Vector2(85, 60)
+
+    sprint.anchor_left = 1.0
+    sprint.anchor_top = 1.0
+    sprint.anchor_right = 1.0
+    sprint.anchor_bottom = 1.0
+
+    sprint.offset_left = -125
+    sprint.offset_top = -195
+    sprint.offset_right = -40
+    sprint.offset_bottom = -135
+
+    layer.add_child(sprint)
+
+    sprint.button_down.connect(player.set_running.bind(true))
+    sprint.button_up.connect(player.set_running.bind(false))
+
+
 
 func create_control_button(
     layer: CanvasLayer,
