@@ -2,7 +2,7 @@
 extends Node3D
 
 const PLAYER_SCRIPT = preload("res://scripts/player.gd")
-
+const TARGET_SCRIPT = preload("res://scripts/training_target.gd")
 var player: CharacterBody3D
 var ammo_label: Label
 var aim_button: Button
@@ -13,6 +13,7 @@ func _ready() -> void:
     create_ground()
     create_environment_objects()
     create_player()
+    create_training_target()
     create_mobile_controls()
     create_hud()
 
@@ -316,3 +317,8 @@ func _on_aim_changed(active: bool) -> void:
             if active
             else "MATCH STATUS: WAITING"
         )
+func create_training_target() -> void:
+    var target := StaticBody3D.new()
+    target.set_script(TARGET_SCRIPT)
+    target.position = Vector3(0, 0, -12)
+    add_child(target)
