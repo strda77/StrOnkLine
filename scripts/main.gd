@@ -11,6 +11,7 @@ func _ready() -> void:
     create_environment_objects()
     create_player()
     create_mobile_controls()
+    create_hud()
 
 
 func create_ground() -> void:
@@ -155,3 +156,61 @@ func create_control_button(
     button.button_up.connect(
         player.set_direction.bind(direction, false)
     )
+
+func create_hud() -> void:
+    var layer := CanvasLayer.new()
+    layer.name = "GameHUD"
+    layer.layer = 2
+    add_child(layer)
+
+    var title := Label.new()
+    title.text = "STRONKLINE"
+    title.position = Vector2(25, 20)
+    title.add_theme_font_size_override("font_size", 26)
+    title.add_theme_color_override(
+        "font_color", Color(0.75, 0.85, 0.72)
+    )
+    layer.add_child(title)
+
+    var status := Label.new()
+    status.text = "MATCH STATUS: WAITING"
+    status.position = Vector2(25, 55)
+    status.add_theme_font_size_override("font_size", 15)
+    status.add_theme_color_override(
+        "font_color", Color(0.9, 0.85, 0.55)
+    )
+    layer.add_child(status)
+
+    var hp := Label.new()
+    hp.text = "HP  100"
+    hp.position = Vector2(25, 95)
+    hp.add_theme_font_size_override("font_size", 20)
+    hp.add_theme_color_override(
+        "font_color", Color(0.35, 0.95, 0.45)
+    )
+    layer.add_child(hp)
+
+    var armor := Label.new()
+    armor.text = "ARMOR  100"
+    armor.position = Vector2(25, 125)
+    armor.add_theme_font_size_override("font_size", 18)
+    armor.add_theme_color_override(
+        "font_color", Color(0.35, 0.75, 1.0)
+    )
+    layer.add_child(armor)
+
+    var ammo := Label.new()
+    ammo.text = "AMMO  30 / 120"
+    ammo.anchor_left = 1.0
+    ammo.anchor_right = 1.0
+    ammo.offset_left = -230
+    ammo.offset_right = -25
+    ammo.offset_top = 30
+    ammo.offset_bottom = 65
+    ammo.add_theme_font_size_override("font_size", 22)
+    ammo.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+    ammo.add_theme_color_override(
+        "font_color", Color(1.0, 0.85, 0.45)
+    )
+    layer.add_child(ammo)
+
