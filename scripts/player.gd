@@ -13,7 +13,7 @@ var jump_requested := false
 var running := false
 
 var camera_pivot: Node3D
-var camera_pitch := 12.0
+var camera_pitch := -12.0
 var camera_touch_index := -1
 
 
@@ -68,7 +68,7 @@ func _input(event: InputEvent) -> void:
     if event is InputEventScreenTouch:
         if event.pressed:
             if event.position.x > screen_size.x * 0.45 \
-            and event.position.y < screen_size.y - 140:
+            and event.position.y < screen_size.y - 220:
                 camera_touch_index = event.index
         elif event.index == camera_touch_index:
             camera_touch_index = -1
