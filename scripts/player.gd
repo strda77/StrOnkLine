@@ -4,6 +4,8 @@ extends CharacterBody3D
 signal ammo_changed(current: int, reserve: int)
 signal aim_changed(active: bool)
 signal weapon_fired
+signal hit_confirmed
+signal shot_missed
 
 const WALK_SPEED := 5.0
 const RUN_SPEED := 8.0
@@ -17,6 +19,10 @@ const FIRE_INTERVAL := 0.12
 const NORMAL_FOV := 75.0
 const AIM_FOV := 48.0
 
+const HIP_RECOIL := 2.0
+const AIM_RECOIL := 1.2
+const RECOIL_RECOVERY := 8.0
+
 var move_direction := Vector2.ZERO
 var pressed_directions: Dictionary = {}
 var jump_requested := false
@@ -28,6 +34,13 @@ var camera_pitch := -12.0
 var camera_touch_index := -1
 
 var weapon: Node3D
+var muzzle_flash: MeshInstance3D
+var muzzle_light: OmniLight3D
+var muzzle_timer := 0.0
+
+var recoil_pitch := 0.0
+var recoil_yaw := 0.0
+
 var aiming := false
 var reloading := false
 var current_ammo := MAGAZINE_SIZE
@@ -112,6 +125,8 @@ func create_weapon() -> void:
         Color(0.08, 0.09, 0.08)
     )
 
+    create_muzzle_effect()
+
 
 func add_weapon_part(
     part_position: Vector3,
@@ -131,6 +146,37 @@ func add_weapon_part(
     part.material_override = material
 
     weapon.add_child(part)
+
+
+func create_muzzle_effect() -> void:
+    muzzle_flash = MeshInstance3D.new()
+
+    var flash_mesh := SphereMesh.new()
+    flash_mesh.radius = 0.09
+    flash_mesh.height = 0.18
+
+    muzzle_flash.mesh = flash_mesh
+    muzzle_flash.position = Vector3(0.0, -0.02, -0.67)
+
+    var flash_material := StandardMaterial3D.new()
+    flash_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+    flash_material.albedo_color = Color(1.0, 0.65, 0.12)
+    flash_material.emission_enabled = true
+    flash_material.emission = Color(1.0, 0.35, 0.05)
+    muzzle_flash.material_override = flash_material
+
+    weapon.add_child(muzzle_flash)
+    muzzle_flash.visible = false
+
+    muzzle_light = OmniLight3D.new()
+    muzzle_light.position = Vector3(0.0, -0.02, -0.7)
+    muzzle_light.light_color = Color(1.0, 0.55, 0.18)
+    muzzle_light.light_energy = 2.0
+    muzzle_light.omni_range = 2.5
+    muzzle_light.shadow_enabled = false
+
+    weapon.add_child(muzzle_light)
+    muzzle_light.visible = false
 
 
 func _input(event: InputEvent) -> void:
@@ -155,7 +201,7 @@ func rotate_camera(delta_position: Vector2) -> void:
     camera_pitch -= delta_position.y * TOUCH_SENSITIVITY
     camera_pitch = clamp(camera_pitch, -55.0, 65.0)
 
-    camera_pivot.rotation_degrees.x = camera_pitch
+    camera_pivot.rotation_degrees.x = camera_pitch - recoil_pitch
 
 
 func set_direction(direction: Vector2, pressed: bool) -> void:
@@ -191,6 +237,25 @@ func set_aim(value: bool) -> void:
     aim_changed.emit(aiming)
 
 
+func apply_recoil() -> void:
+    var amount := AIM_RECOIL if aiming else HIP_RECOIL
+
+    recoil_pitch += amount
+    recoil_yaw += randf_range(-0.35, 0.35)
+
+    recoil_pitch = minf(recoil_pitch, 8.0)
+    recoil_yaw = clampf(recoil_yaw, -2.0, 2.0)
+
+    camera_pivot.rotation_degrees.x = camera_pitch - recoil_pitch
+    camera_pivot.rotation_degrees.y = recoil_yaw
+
+
+func show_muzzle_effect() -> void:
+    muzzle_timer = 0.07
+    muzzle_flash.visible = true
+    muzzle_light.visible = true
+
+
 func fire_weapon() -> void:
     if reloading or fire_cooldown > 0.0:
         return
@@ -205,6 +270,12 @@ func fire_weapon() -> void:
     ammo_changed.emit(current_ammo, reserve_ammo)
     weapon_fired.emit()
 
+    apply_recoil()
+    show_muzzle_effect()
+
+    if OS.has_feature("android"):
+        Input.vibrate_handheld(25)
+
     var center := get_viewport().get_visible_rect().size / 2.0
     var origin := camera.project_ray_origin(center)
     var direction := camera.project_ray_normal(center)
@@ -213,6 +284,7 @@ func fire_weapon() -> void:
         origin,
         origin + direction * 200.0
     )
+
     query.exclude = [get_rid()]
     query.collision_mask = 1
 
@@ -223,10 +295,13 @@ func fire_weapon() -> void:
 
         if hit_object.has_method("take_damage"):
             hit_object.take_damage(25)
+            hit_confirmed.emit()
             print("TARGET HIT - 25 DAMAGE")
         else:
             print("HIT: ", hit_object.name)
+            shot_missed.emit()
     else:
+        shot_missed.emit()
         print("SHOT MISSED")
 
 
@@ -246,6 +321,9 @@ func reload_weapon() -> void:
 
     await get_tree().create_timer(RELOAD_TIME).timeout
 
+    if not is_inside_tree():
+        return
+
     var needed := MAGAZINE_SIZE - current_ammo
     var loaded := min(needed, reserve_ammo)
 
@@ -259,6 +337,24 @@ func reload_weapon() -> void:
 
 func _process(delta: float) -> void:
     fire_cooldown = maxf(0.0, fire_cooldown - delta)
+
+    recoil_pitch = move_toward(
+        recoil_pitch, 0.0, RECOIL_RECOVERY * delta
+    )
+
+    recoil_yaw = move_toward(
+        recoil_yaw, 0.0, RECOIL_RECOVERY * delta
+    )
+
+    camera_pivot.rotation_degrees.x = camera_pitch - recoil_pitch
+    camera_pivot.rotation_degrees.y = recoil_yaw
+
+    if muzzle_timer > 0.0:
+        muzzle_timer -= delta
+
+        if muzzle_timer <= 0.0:
+            muzzle_flash.visible = false
+            muzzle_light.visible = false
 
 
 func _physics_process(delta: float) -> void:
