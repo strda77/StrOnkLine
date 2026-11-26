@@ -1,9 +1,16 @@
 
 extends Node3D
 
+const PLAYER_SCRIPT = preload("res://scripts/player.gd")
+
+var player: CharacterBody3D
+
+
 func _ready() -> void:
     create_ground()
     create_environment_objects()
+    create_player()
+    create_mobile_controls()
 
 
 func create_ground() -> void:
@@ -49,3 +56,69 @@ func create_environment_objects() -> void:
         )
 
         add_child(block)
+
+
+func create_player() -> void:
+    player = CharacterBody3D.new()
+    player.set_script(PLAYER_SCRIPT)
+    player.position = Vector3(0, 0.2, 0)
+    add_child(player)
+
+
+func create_mobile_controls() -> void:
+    var layer := CanvasLayer.new()
+    add_child(layer)
+
+    create_control_button(layer, "↑", Vector2(90, -170),
+        Vector2(70, 70), Vector2(0, -1))
+    create_control_button(layer, "↓", Vector2(90, -30),
+        Vector2(70, 70), Vector2(0, 1))
+    create_control_button(layer, "←", Vector2(20, -100),
+        Vector2(70, 70), Vector2(-1, 0))
+    create_control_button(layer, "→", Vector2(160, -100),
+        Vector2(70, 70), Vector2(1, 0))
+
+    var jump := Button.new()
+    jump.text = "JUMP"
+    jump.custom_minimum_size = Vector2(95, 65)
+    jump.anchor_left = 1.0
+    jump.anchor_top = 1.0
+    jump.anchor_right = 1.0
+    jump.anchor_bottom = 1.0
+    jump.offset_left = -125
+    jump.offset_top = -110
+    jump.offset_right = -30
+    jump.offset_bottom = -45
+    layer.add_child(jump)
+    jump.pressed.connect(player.request_jump)
+
+
+func create_control_button(
+    layer: CanvasLayer,
+    label: String,
+    offset: Vector2,
+    button_size: Vector2,
+    direction: Vector2
+) -> void:
+    var button := Button.new()
+    button.text = label
+    button.custom_minimum_size = button_size
+
+    button.anchor_left = 0.0
+    button.anchor_top = 1.0
+    button.anchor_right = 0.0
+    button.anchor_bottom = 1.0
+
+    button.offset_left = offset.x
+    button.offset_top = offset.y
+    button.offset_right = offset.x + button_size.x
+    button.offset_bottom = offset.y + button_size.y
+
+    layer.add_child(button)
+
+    button.button_down.connect(
+        player.set_direction.bind(direction, true)
+    )
+    button.button_up.connect(
+        player.set_direction.bind(direction, false)
+    )
