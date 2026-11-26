@@ -7,6 +7,7 @@ var player: CharacterBody3D
 var ammo_label: Label
 var aim_button: Button
 var status_label: Label
+var hit_marker: Label
 
 
 func _ready() -> void:
@@ -88,6 +89,15 @@ func create_player() -> void:
     player.connect(
         "aim_changed",
         Callable(self, "_on_aim_changed")
+    )
+    player.connect(
+        "hit_confirmed",
+        Callable(self, "_on_hit_confirmed")
+    )
+
+    player.connect(
+        "shot_missed",
+        Callable(self, "_on_shot_missed")
     )
 
     _on_ammo_changed(30, 120)
@@ -303,6 +313,24 @@ func create_hud() -> void:
         "font_color", Color(0.9, 0.95, 0.85)
     )
     layer.add_child(crosshair)
+    hit_marker = Label.new()
+    hit_marker.text = "X"
+    hit_marker.anchor_left = 0.5
+    hit_marker.anchor_top = 0.5
+    hit_marker.anchor_right = 0.5
+    hit_marker.anchor_bottom = 0.5
+    hit_marker.offset_left = -15
+    hit_marker.offset_top = -20
+    hit_marker.offset_right = 15
+    hit_marker.offset_bottom = 20
+    hit_marker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    hit_marker.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    hit_marker.add_theme_font_size_override("font_size", 32)
+    hit_marker.add_theme_color_override(
+        "font_color", Color(1.0, 0.25, 0.18)
+    )
+    hit_marker.visible = false
+    layer.add_child(hit_marker)
 
 
 func _on_ammo_changed(current: int, reserve: int) -> void:
@@ -322,3 +350,24 @@ func create_training_target() -> void:
     target.set_script(TARGET_SCRIPT)
     target.position = Vector3(0, 0, -12)
     add_child(target)
+func _on_hit_confirmed() -> void:
+    show_hit_marker("X", Color(1.0, 0.25, 0.18))
+
+
+func _on_shot_missed() -> void:
+    show_hit_marker(".", Color(1.0, 0.85, 0.35))
+
+
+func show_hit_marker(symbol: String, marker_color: Color) -> void:
+    if not is_instance_valid(hit_marker):
+        return
+
+    hit_marker.text = symbol
+    hit_marker.add_theme_color_override("font_color", marker_color)
+    hit_marker.visible = true
+
+    var timer := get_tree().create_timer(0.25)
+    timer.timeout.connect(func():
+        if is_instance_valid(hit_marker):
+            hit_marker.visible = false
+    )
