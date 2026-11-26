@@ -8,6 +8,7 @@ const GRAVITY := 18.0
 const TOUCH_SENSITIVITY := 0.12
 
 var move_direction := Vector2.ZERO
+var pressed_directions: Dictionary = {}
 var jump_requested := false
 var running := false
 
@@ -88,9 +89,17 @@ func rotate_camera(delta_position: Vector2) -> void:
 
 func set_direction(direction: Vector2, pressed: bool) -> void:
     if pressed:
-        move_direction = direction
-    elif move_direction == direction:
-        move_direction = Vector2.ZERO
+        pressed_directions[direction] = true
+    else:
+        pressed_directions.erase(direction)
+
+    var combined := Vector2.ZERO
+
+    for key in pressed_directions:
+        combined += key
+
+    move_direction = combined.normalized()
+
 
 
 func request_jump() -> void:
