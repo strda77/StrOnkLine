@@ -348,7 +348,7 @@ func _on_aim_changed(active: bool) -> void:
 func create_training_target() -> void:
     var target := StaticBody3D.new()
     target.set_script(TARGET_SCRIPT)
-    target.position = Vector3(0, 0, -12)
+    target.position = Vector3(0,7, 0, -12)
     add_child(target)
 func _on_hit_confirmed() -> void:
     show_hit_marker("X", Color(1.0, 0.25, 0.18))
