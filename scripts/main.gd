@@ -4,6 +4,9 @@ extends Node3D
 const PLAYER_SCRIPT = preload("res://scripts/player.gd")
 
 var player: CharacterBody3D
+var ammo_label: Label
+var aim_button: Button
+var status_label: Label
 
 
 func _ready() -> void:
@@ -28,7 +31,6 @@ func create_ground() -> void:
     material.albedo_color = Color(0.19, 0.25, 0.18)
     material.roughness = 1.0
     mesh.material_override = material
-
     ground.add_child(mesh)
 
     var collision := CollisionShape3D.new()
@@ -37,7 +39,6 @@ func create_ground() -> void:
     collision.shape = shape
     collision.position.y = -0.1
     ground.add_child(collision)
-
 
 
 func create_environment_objects() -> void:
@@ -55,7 +56,6 @@ func create_environment_objects() -> void:
         material.albedo_color = Color(0.25, 0.29, 0.25)
         material.roughness = 0.9
         mesh.material_override = material
-
         obstacle.add_child(mesh)
 
         var collision := CollisionShape3D.new()
@@ -72,59 +72,128 @@ func create_environment_objects() -> void:
 
         add_child(obstacle)
 
+
 func create_player() -> void:
     player = CharacterBody3D.new()
     player.set_script(PLAYER_SCRIPT)
     player.position = Vector3(0, 0, 0)
     add_child(player)
 
+    player.connect(
+        "ammo_changed",
+        Callable(self, "_on_ammo_changed")
+    )
+
+    player.connect(
+        "aim_changed",
+        Callable(self, "_on_aim_changed")
+    )
+
+    _on_ammo_changed(30, 120)
+
 
 func create_mobile_controls() -> void:
     var layer := CanvasLayer.new()
+    layer.name = "MobileControls"
+    layer.layer = 1
     add_child(layer)
 
-    create_control_button(layer, "↑", Vector2(90, -170),
-        Vector2(70, 70), Vector2(0, -1))
-    create_control_button(layer, "↓", Vector2(90, -30),
-        Vector2(70, 70), Vector2(0, 1))
-    create_control_button(layer, "←", Vector2(20, -100),
-        Vector2(70, 70), Vector2(-1, 0))
-    create_control_button(layer, "→", Vector2(160, -100),
-        Vector2(70, 70), Vector2(1, 0))
+    create_control_button(
+        layer, "↑", Vector2(90, -170),
+        Vector2(70, 70), Vector2(0, -1)
+    )
 
-    var jump := Button.new()
-    jump.text = "JUMP"
-    jump.custom_minimum_size = Vector2(95, 65)
-    jump.anchor_left = 1.0
-    jump.anchor_top = 1.0
-    jump.anchor_right = 1.0
-    jump.anchor_bottom = 1.0
-    jump.offset_left = -125
-    jump.offset_top = -110
-    jump.offset_right = -30
-    jump.offset_bottom = -45
-    layer.add_child(jump)
-    jump.pressed.connect(player.request_jump)
+    create_control_button(
+        layer, "↓", Vector2(90, -30),
+        Vector2(70, 70), Vector2(0, 1)
+    )
 
-    var sprint := Button.new()
-    sprint.text = "RUN"
-    sprint.custom_minimum_size = Vector2(85, 60)
+    create_control_button(
+        layer, "←", Vector2(20, -100),
+        Vector2(70, 70), Vector2(-1, 0)
+    )
 
-    sprint.anchor_left = 1.0
-    sprint.anchor_top = 1.0
-    sprint.anchor_right = 1.0
-    sprint.anchor_bottom = 1.0
+    create_control_button(
+        layer, "→", Vector2(160, -100),
+        Vector2(70, 70), Vector2(1, 0)
+    )
 
-    sprint.offset_left = -125
-    sprint.offset_top = -195
-    sprint.offset_right = -40
-    sprint.offset_bottom = -135
+    create_action_button(
+        layer, "JUMP",
+        Vector2(-225, -110),
+        Vector2(95, 65),
+        player.request_jump
+    )
 
-    layer.add_child(sprint)
+    create_action_button(
+        layer, "RUN",
+        Vector2(-115, -190),
+        Vector2(85, 60),
+        null,
+        player.set_running
+    )
 
-    sprint.button_down.connect(player.set_running.bind(true))
-    sprint.button_up.connect(player.set_running.bind(false))
+    aim_button = Button.new()
+    aim_button.text = "AIM"
+    aim_button.toggle_mode = true
+    aim_button.custom_minimum_size = Vector2(95, 65)
+    set_bottom_right(aim_button, Vector2(-225, -190))
+    layer.add_child(aim_button)
+    aim_button.toggled.connect(player.set_aim)
 
+    create_action_button(
+        layer, "FIRE",
+        Vector2(-115, -110),
+        Vector2(95, 65),
+        player.fire_weapon
+    )
+
+    create_action_button(
+        layer, "RELOAD",
+        Vector2(-225, -270),
+        Vector2(95, 60),
+        player.reload_weapon
+    )
+
+
+func set_bottom_right(
+    control: Control,
+    offset: Vector2
+) -> void:
+    control.anchor_left = 1.0
+    control.anchor_top = 1.0
+    control.anchor_right = 1.0
+    control.anchor_bottom = 1.0
+
+    control.offset_left = offset.x
+    control.offset_top = offset.y
+    control.offset_right = offset.x + control.custom_minimum_size.x
+    control.offset_bottom = offset.y + control.custom_minimum_size.y
+
+
+func create_action_button(
+    layer: CanvasLayer,
+    label: String,
+    offset: Vector2,
+    button_size: Vector2,
+    action: Callable,
+    hold_action: Callable = Callable()
+) -> void:
+    var button := Button.new()
+    button.text = label
+    button.custom_minimum_size = button_size
+    set_bottom_right(button, offset)
+    layer.add_child(button)
+
+    if hold_action.is_valid():
+        button.button_down.connect(
+            hold_action.bind(true)
+        )
+        button.button_up.connect(
+            hold_action.bind(false)
+        )
+    elif action.is_valid():
+        button.pressed.connect(action)
 
 
 func create_control_button(
@@ -153,9 +222,11 @@ func create_control_button(
     button.button_down.connect(
         player.set_direction.bind(direction, true)
     )
+
     button.button_up.connect(
         player.set_direction.bind(direction, false)
     )
+
 
 func create_hud() -> void:
     var layer := CanvasLayer.new()
@@ -172,14 +243,14 @@ func create_hud() -> void:
     )
     layer.add_child(title)
 
-    var status := Label.new()
-    status.text = "MATCH STATUS: WAITING"
-    status.position = Vector2(25, 55)
-    status.add_theme_font_size_override("font_size", 15)
-    status.add_theme_color_override(
+    status_label = Label.new()
+    status_label.text = "MATCH STATUS: WAITING"
+    status_label.position = Vector2(25, 55)
+    status_label.add_theme_font_size_override("font_size", 15)
+    status_label.add_theme_color_override(
         "font_color", Color(0.9, 0.85, 0.55)
     )
-    layer.add_child(status)
+    layer.add_child(status_label)
 
     var hp := Label.new()
     hp.text = "HP  100"
@@ -199,18 +270,49 @@ func create_hud() -> void:
     )
     layer.add_child(armor)
 
-    var ammo := Label.new()
-    ammo.text = "AMMO  30 / 120"
-    ammo.anchor_left = 1.0
-    ammo.anchor_right = 1.0
-    ammo.offset_left = -230
-    ammo.offset_right = -25
-    ammo.offset_top = 30
-    ammo.offset_bottom = 65
-    ammo.add_theme_font_size_override("font_size", 22)
-    ammo.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-    ammo.add_theme_color_override(
+    ammo_label = Label.new()
+    ammo_label.text = "AMMO  30 / 120"
+    ammo_label.anchor_left = 1.0
+    ammo_label.anchor_right = 1.0
+    ammo_label.offset_left = -250
+    ammo_label.offset_right = -25
+    ammo_label.offset_top = 30
+    ammo_label.offset_bottom = 65
+    ammo_label.add_theme_font_size_override("font_size", 22)
+    ammo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+    ammo_label.add_theme_color_override(
         "font_color", Color(1.0, 0.85, 0.45)
     )
-    layer.add_child(ammo)
+    layer.add_child(ammo_label)
 
+    var crosshair := Label.new()
+    crosshair.text = "+"
+    crosshair.anchor_left = 0.5
+    crosshair.anchor_top = 0.5
+    crosshair.anchor_right = 0.5
+    crosshair.anchor_bottom = 0.5
+    crosshair.offset_left = -12
+    crosshair.offset_top = -18
+    crosshair.offset_right = 12
+    crosshair.offset_bottom = 18
+    crosshair.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    crosshair.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    crosshair.add_theme_font_size_override("font_size", 30)
+    crosshair.add_theme_color_override(
+        "font_color", Color(0.9, 0.95, 0.85)
+    )
+    layer.add_child(crosshair)
+
+
+func _on_ammo_changed(current: int, reserve: int) -> void:
+    if ammo_label:
+        ammo_label.text = "AMMO  %02d / %03d" % [current, reserve]
+
+
+func _on_aim_changed(active: bool) -> void:
+    if status_label:
+        status_label.text = (
+            "WEAPON STATUS: AIMING"
+            if active
+            else "MATCH STATUS: WAITING"
+        )
