@@ -7,6 +7,7 @@ const MAX_HEALTH := 100
 const RESPAWN_TIME := 3.0
 
 var health := MAX_HEALTH
+var destroyed := false
 var collision_shape: CollisionShape3D
 var target_mesh: MeshInstance3D
 var health_label: Label3D
@@ -73,8 +74,11 @@ func take_damage(amount: int) -> void:
 
     destroy_target()
 
-
 func destroy_target() -> void:
+    if destroyed:
+        return
+
+    destroyed = true
     target_destroyed.emit()
 
     health_label.text = "TARGET DESTROYED"
@@ -89,3 +93,4 @@ func destroy_target() -> void:
 
     health_label.text = "TARGET 100 HP"
     target_material.albedo_color = Color(0.65, 0.12, 0.08)
+    destroyed = false
