@@ -129,7 +129,7 @@ func create_mobile_controls() -> void:
         layer, "RUN",
         Vector2(-115, -190),
         Vector2(85, 60),
-        null,
+        Callable(),
         player.set_running
     )
 
