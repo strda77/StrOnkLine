@@ -58,6 +58,34 @@ func create_enemy() -> void:
 func set_player(target: Node3D) -> void:
     player = target
 
+func get_avoidance_direction(direction: Vector3) -> Vector3:
+    var space_state := get_world_3d().direct_space_state
+
+    var origin := global_position + Vector3.UP
+    var destination := origin + direction * 2.5
+
+    var query := PhysicsRayQueryParameters3D.create(
+        origin,
+        destination
+    )
+
+    query.exclude = [get_rid(), player.get_rid()]
+    query.collision_mask = 1
+
+    var result := space_state.intersect_ray(query)
+
+    if result.is_empty():
+        return direction
+
+    var wall_normal: Vector3 = result.get("normal")
+    var avoidance := direction + wall_normal * 1.5
+    avoidance.y = 0.0
+
+    if avoidance.length() < 0.01:
+        return direction
+
+    return avoidance.normalized()
+
 
 func take_damage(amount: int) -> void:
     if defeated or amount <= 0:
@@ -116,8 +144,9 @@ func _physics_process(delta: float) -> void:
 
     if distance > ATTACK_RANGE:
         direction = direction.normalized()
+        direction = get_avoidance_direction(direction)
+
         velocity.x = direction.x * MOVE_SPEED
-        velocity.z = direction.z * MOVE_SPEED
 
         if direction.length() > 0.01:
             look_at(
