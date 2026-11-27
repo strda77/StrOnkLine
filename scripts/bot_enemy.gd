@@ -114,7 +114,7 @@ func _physics_process(delta: float) -> void:
     var direction := player.global_position - global_position
     direction.y = 0.0
 
-        if distance > ATTACK_RANGE:
+    if distance > ATTACK_RANGE:
         direction = direction.normalized()
         velocity.x = direction.x * MOVE_SPEED
         velocity.z = direction.z * MOVE_SPEED
