@@ -184,8 +184,11 @@ func create_muzzle_effect() -> void:
     weapon.add_child(muzzle_light)
     muzzle_light.visible = false
 
-
 func _input(event: InputEvent) -> void:
+    if defeated:
+        camera_touch_index = -1
+        return
+
     var screen_size := get_viewport().get_visible_rect().size
 
     if event is InputEventScreenTouch:
@@ -200,7 +203,6 @@ func _input(event: InputEvent) -> void:
         if event.index == camera_touch_index:
             rotate_camera(event.screen_relative)
 
-
 func rotate_camera(delta_position: Vector2) -> void:
     rotate_y(-delta_position.x * TOUCH_SENSITIVITY * 0.01)
 
@@ -211,6 +213,11 @@ func rotate_camera(delta_position: Vector2) -> void:
 
 
 func set_direction(direction: Vector2, pressed: bool) -> void:
+    if defeated:
+        pressed_directions.clear()
+        move_direction = Vector2.ZERO
+        return
+
     if pressed:
         pressed_directions[direction] = true
     else:
@@ -223,6 +230,27 @@ func set_direction(direction: Vector2, pressed: bool) -> void:
 
     move_direction = combined.normalized()
 
+
+func request_jump() -> void:
+    if not defeated:
+        jump_requested = true
+
+
+func set_running(value: bool) -> void:
+    running = value and not defeated
+
+
+func set_aim(value: bool) -> void:
+    if defeated:
+        return
+
+    if aiming == value:
+        return
+
+        camera.fov = AIM_FOV if aiming else NORMAL_FOV
+    weapon.position.x = 0.25 if aiming else 0.42
+    weapon.position.y = -0.28 if aiming else -0.32
+    aim_changed.emit(aiming)
 
 func request_jump() -> void:
     jump_requested = true
@@ -334,13 +362,27 @@ func take_damage(amount: int) -> void:
     if health <= 0:
         defeated = true
         velocity = Vector3.ZERO
+        move_direction = Vector2.ZERO
+        pressed_directions.clear()
+        jump_requested = false
+        running = false
+
+        if aiming:
+            aiming = false
+            camera.fov = NORMAL_FOV
+            weapon.position.x = 0.42
+            weapon.position.y = -0.32
+            aim_changed.emit(false)
+
+        muzzle_timer = 0.0
+        muzzle_flash.visible = false
+        muzzle_light.visible = false
+
         player_defeated.emit()
         print("PLAYER ELIMINATED")
 
 func reload_weapon() -> void:
-    if defeated:
-        return
-    if reloading:
+    if defeated or reloading:
         return
 
     if current_ammo >= MAGAZINE_SIZE:
@@ -358,8 +400,13 @@ func reload_weapon() -> void:
     if not is_inside_tree():
         return
 
+    if defeated:
+        reloading = false
+        print("RELOAD CANCELLED - PLAYER ELIMINATED")
+        return
+
     var needed := MAGAZINE_SIZE - current_ammo
-    var loaded := min(needed, reserve_ammo)
+    var loaded := mini(needed, reserve_ammo)
 
     current_ammo += loaded
     reserve_ammo -= loaded
@@ -367,7 +414,6 @@ func reload_weapon() -> void:
     reloading = false
     ammo_changed.emit(current_ammo, reserve_ammo)
     print("RELOAD COMPLETE")
-
 
 func _process(delta: float) -> void:
     fire_cooldown = maxf(0.0, fire_cooldown - delta)
@@ -390,8 +436,16 @@ func _process(delta: float) -> void:
             muzzle_flash.visible = false
             muzzle_light.visible = false
 
-
 func _physics_process(delta: float) -> void:
+    if defeated:
+        velocity = Vector3.ZERO
+        move_direction = Vector2.ZERO
+        pressed_directions.clear()
+        jump_requested = false
+        running = false
+        move_and_slide()
+        return
+
     if not is_on_floor():
         velocity.y -= GRAVITY * delta
     elif jump_requested:
@@ -415,3 +469,4 @@ func _physics_process(delta: float) -> void:
     velocity.z = direction.z * speed
 
     move_and_slide()
+
