@@ -78,6 +78,30 @@ func get_avoidance_direction(direction: Vector3) -> Vector3:
     if result.is_empty():
         return direction
 
+        var side_direction := Vector3(-direction.z, 0.0, direction.x)
+
+    var left_direction := (direction + side_direction).normalized()
+    var left_query := PhysicsRayQueryParameters3D.create(
+        origin,
+        origin + left_direction * 2.5
+    )
+    left_query.exclude = [get_rid(), player.get_rid()]
+    left_query.collision_mask = 1
+
+    if space_state.intersect_ray(left_query).is_empty():
+        return left_direction
+
+    var right_direction := (direction - side_direction).normalized()
+    var right_query := PhysicsRayQueryParameters3D.create(
+        origin,
+        origin + right_direction * 2.5
+    )
+    right_query.exclude = [get_rid(), player.get_rid()]
+    right_query.collision_mask = 1
+
+    if space_state.intersect_ray(right_query).is_empty():
+        return right_direction
+
     var wall_normal: Vector3 = result.get("normal")
     var avoidance := direction + wall_normal * 1.5
     avoidance.y = 0.0
@@ -86,7 +110,6 @@ func get_avoidance_direction(direction: Vector3) -> Vector3:
         return direction
 
     return avoidance.normalized()
-
 
 func take_damage(amount: int) -> void:
     if defeated or amount <= 0:
