@@ -3,6 +3,8 @@ extends Node3D
 
 const PLAYER_SCRIPT = preload("res://scripts/player.gd")
 const TARGET_SCRIPT = preload("res://scripts/training_target.gd")
+const BOT_SCRIPT = preload("res://scripts/bot_enemy.gd")
+
 var player: CharacterBody3D
 var ammo_label: Label
 var aim_button: Button
@@ -12,10 +14,12 @@ var hp_label: Label
 var armor_label: Label
 
 
+
 func _ready() -> void:
     create_ground()
     create_environment_objects()
     create_player()
+    create_bot_enemy()
     create_training_target()
     create_mobile_controls()
     create_hud()
@@ -358,11 +362,20 @@ func _on_aim_changed(active: bool) -> void:
             if active
             else "MATCH STATUS: WAITING"
         )
+
+func create_bot_enemy() -> void:
+    var bot := CharacterBody3D.new()
+    bot.set_script(BOT_SCRIPT)
+    bot.position = Vector3(6, 0, -10)
+    add_child(bot)
+    bot.set_player(player)
+
 func create_training_target() -> void:
     var target := StaticBody3D.new()
     target.set_script(TARGET_SCRIPT)
     target.position = Vector3(0.7, 0, -12)
     add_child(target)
+
 func _on_hit_confirmed() -> void:
     show_hit_marker("X", Color(1.0, 0.25, 0.18))
 
