@@ -101,12 +101,12 @@ func create_player() -> void:
         "shot_missed",
         Callable(self, "_on_shot_missed")
     )
-player.connect(
+    player.connect(
     "vitals_changed",
     Callable(self, "_on_vitals_changed")
 )
 
-player.connect(
+    player.connect(
     "player_defeated",
     Callable(self, "_on_player_defeated")
 )
