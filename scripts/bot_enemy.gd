@@ -114,14 +114,18 @@ func _physics_process(delta: float) -> void:
     var direction := player.global_position - global_position
     direction.y = 0.0
 
-    if distance > ATTACK_RANGE:
+        if distance > ATTACK_RANGE:
         direction = direction.normalized()
         velocity.x = direction.x * MOVE_SPEED
         velocity.z = direction.z * MOVE_SPEED
 
         if direction.length() > 0.01:
             look_at(
-                Vector3(player.global_position.x, global_position.y, player.global_position.z),
+                Vector3(
+                    player.global_position.x,
+                    global_position.y,
+                    player.global_position.z
+                ),
                 Vector3.UP
             )
     else:
@@ -129,35 +133,35 @@ func _physics_process(delta: float) -> void:
         velocity.z = 0.0
 
         look_at(
-        Vector3(
-            player.global_position.x,
-            global_position.y,
-            player.global_position.z
-        ),
-        Vector3.UP
-    )
+            Vector3(
+                player.global_position.x,
+                global_position.y,
+                player.global_position.z
+            ),
+            Vector3.UP
+        )
 
-    var space_state := get_world_3d().direct_space_state
-    var origin := global_position + Vector3.UP
-    var target_position := player.global_position + Vector3.UP
-    var query := PhysicsRayQueryParameters3D.create(
-        origin,
-        target_position
-    )
-    query.exclude = [get_rid()]
-    query.collision_mask = 1
+        var space_state := get_world_3d().direct_space_state
+        var origin := global_position + Vector3.UP
+        var target_position := player.global_position + Vector3.UP
 
-    var result := space_state.intersect_ray(query)
-    var can_see_player := (
-        not result.is_empty()
-        and result.get("collider") == player
-    )
+        var query := PhysicsRayQueryParameters3D.create(
+            origin,
+            target_position
+        )
+        query.exclude = [get_rid()]
+        query.collision_mask = 1
 
-    if can_see_player and attack_timer <= 0.0:
-        attack_timer = ATTACK_INTERVAL
+        var result := space_state.intersect_ray(query)
+        var can_see_player := (
+            not result.is_empty()
+            and result.get("collider") == player
+        )
 
-        if player.has_method("take_damage"):
-            player.take_damage(ATTACK_DAMAGE)
+        if can_see_player and attack_timer <= 0.0:
+            attack_timer = ATTACK_INTERVAL
 
+            if player.has_method("take_damage"):
+                player.take_damage(ATTACK_DAMAGE)
 
     move_and_slide()
