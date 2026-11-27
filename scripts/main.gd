@@ -8,6 +8,8 @@ var ammo_label: Label
 var aim_button: Button
 var status_label: Label
 var hit_marker: Label
+var hp_label: Label
+var armor_label: Label
 
 
 func _ready() -> void:
@@ -99,6 +101,15 @@ func create_player() -> void:
         "shot_missed",
         Callable(self, "_on_shot_missed")
     )
+player.connect(
+    "vitals_changed",
+    Callable(self, "_on_vitals_changed")
+)
+
+player.connect(
+    "player_defeated",
+    Callable(self, "_on_player_defeated")
+)
 
     _on_ammo_changed(30, 120)
 
@@ -263,23 +274,25 @@ func create_hud() -> void:
     )
     layer.add_child(status_label)
 
-    var hp := Label.new()
-    hp.text = "HP  100"
-    hp.position = Vector2(25, 95)
-    hp.add_theme_font_size_override("font_size", 20)
-    hp.add_theme_color_override(
-        "font_color", Color(0.35, 0.95, 0.45)
+    hp_label = Label.new()
+    hp_label.text = "HP  100"
+    hp_label.position = Vector2(25, 95)
+    hp_label.add_theme_font_size_override("font_size", 20)
+    hp_label.add_theme_color_override(
+    "font_color", Color(0.35, 0.95, 0.45)
     )
-    layer.add_child(hp)
+    layer.add_child(hp_label)
 
-    var armor := Label.new()
-    armor.text = "ARMOR  100"
-    armor.position = Vector2(25, 125)
-    armor.add_theme_font_size_override("font_size", 18)
-    armor.add_theme_color_override(
-        "font_color", Color(0.35, 0.75, 1.0)
+    armor_label = Label.new()
+    armor_label.text = "ARMOR  100"
+    armor_label.position = Vector2(25, 125)
+    armor_label.add_theme_font_size_override("font_size", 18)
+    armor_label.add_theme_color_override(
+    "font_color", Color(0.35, 0.75, 1.0)
     )
-    layer.add_child(armor)
+    layer.add_child(armor_label)
+
+    _on_vitals_changed(100, 100)
 
     ammo_label = Label.new()
     ammo_label.text = "AMMO  30 / 120"
@@ -371,3 +384,17 @@ func show_hit_marker(symbol: String, marker_color: Color) -> void:
         if is_instance_valid(hit_marker):
             hit_marker.visible = false
     )
+func _on_vitals_changed(current_health: int, current_armor: int) -> void:
+    if is_instance_valid(hp_label):
+        hp_label.text = "HP  %03d" % current_health
+
+    if is_instance_valid(armor_label):
+        armor_label.text = "ARMOR  %03d" % current_armor
+
+
+func _on_player_defeated() -> void:
+    if is_instance_valid(status_label):
+        status_label.text = "YOU ARE ELIMINATED"
+        status_label.add_theme_color_override(
+            "font_color", Color(1.0, 0.2, 0.2)
+        )
