@@ -247,29 +247,10 @@ func set_aim(value: bool) -> void:
     if aiming == value:
         return
 
-        camera.fov = AIM_FOV if aiming else NORMAL_FOV
-    weapon.position.x = 0.25 if aiming else 0.42
-    weapon.position.y = -0.28 if aiming else -0.32
-    aim_changed.emit(aiming)
-
-func request_jump() -> void:
-    jump_requested = true
-
-
-func set_running(value: bool) -> void:
-    running = value
-
-
-func set_aim(value: bool) -> void:
-    if aiming == value:
-        return
-
-    aiming = value
     camera.fov = AIM_FOV if aiming else NORMAL_FOV
     weapon.position.x = 0.25 if aiming else 0.42
     weapon.position.y = -0.28 if aiming else -0.32
     aim_changed.emit(aiming)
-
 
 func apply_recoil() -> void:
     var amount := AIM_RECOIL if aiming else HIP_RECOIL
