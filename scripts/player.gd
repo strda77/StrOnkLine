@@ -239,7 +239,6 @@ func request_jump() -> void:
 func set_running(value: bool) -> void:
     running = value and not defeated
 
-
 func set_aim(value: bool) -> void:
     if defeated:
         return
@@ -247,6 +246,7 @@ func set_aim(value: bool) -> void:
     if aiming == value:
         return
 
+    aiming = value
     camera.fov = AIM_FOV if aiming else NORMAL_FOV
     weapon.position.x = 0.25 if aiming else 0.42
     weapon.position.y = -0.28 if aiming else -0.32
