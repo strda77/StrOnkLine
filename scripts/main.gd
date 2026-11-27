@@ -369,6 +369,10 @@ func create_bot_enemy() -> void:
     bot.position = Vector3(6, 0, -10)
     add_child(bot)
     bot.set_player(player)
+    bot.connect(
+    "enemy_defeated",
+    Callable(self, "_on_bot_defeated")
+)
 
 func create_training_target() -> void:
     var target := StaticBody3D.new()
@@ -410,4 +414,10 @@ func _on_player_defeated() -> void:
         status_label.text = "YOU ARE ELIMINATED"
         status_label.add_theme_color_override(
             "font_color", Color(1.0, 0.2, 0.2)
+        )
+func _on_bot_defeated() -> void:
+    if is_instance_valid(status_label):
+        status_label.text = "ENEMY ELIMINATED"
+        status_label.add_theme_color_override(
+            "font_color", Color(0.35, 1.0, 0.35)
         )
