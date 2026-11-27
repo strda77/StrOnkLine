@@ -78,7 +78,7 @@ func get_avoidance_direction(direction: Vector3) -> Vector3:
     if result.is_empty():
         return direction
 
-        var side_direction := Vector3(-direction.z, 0.0, direction.x)
+    var side_direction := Vector3(-direction.z, 0.0, direction.x)
 
     var left_direction := (direction + side_direction).normalized()
     var left_query := PhysicsRayQueryParameters3D.create(
