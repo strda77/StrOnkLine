@@ -5,6 +5,8 @@ signal aim_changed(active: bool)
 signal weapon_fired
 signal hit_confirmed
 signal shot_missed
+signal vitals_changed(health: int, armor: int)
+signal player_defeated
 
 const WALK_SPEED := 5.0
 const RUN_SPEED := 8.0
@@ -12,6 +14,8 @@ const JUMP_VELOCITY := 5.0
 const GRAVITY := 18.0
 const TOUCH_SENSITIVITY := 0.12
 
+const MAX_HEALTH := 100
+const MAX_ARMOR := 100
 const MAGAZINE_SIZE := 30
 const RELOAD_TIME := 1.6
 const FIRE_INTERVAL := 0.12
@@ -40,6 +44,9 @@ var muzzle_timer := 0.0
 var recoil_pitch := 0.0
 var recoil_yaw := 0.0
 
+var health := MAX_HEALTH
+var armor := MAX_ARMOR
+var defeated := false
 var aiming := false
 var reloading := false
 var current_ammo := MAGAZINE_SIZE
@@ -256,6 +263,8 @@ func show_muzzle_effect() -> void:
 
 
 func fire_weapon() -> void:
+    if defeated:
+        return
     if reloading or fire_cooldown > 0.0:
         return
 
@@ -303,8 +312,34 @@ func fire_weapon() -> void:
         shot_missed.emit()
         print("SHOT MISSED")
 
+func take_damage(amount: int) -> void:
+    if defeated or amount <= 0:
+        return
+
+    var remaining_damage := amount
+
+    if armor > 0:
+        var absorbed := mini(armor, remaining_damage)
+        armor -= absorbed
+        remaining_damage -= absorbed
+
+    if remaining_damage > 0:
+        health = maxi(0, health - remaining_damage)
+
+    vitals_changed.emit(health, armor)
+
+    print("PLAYER DAMAGE: ", amount)
+    print("HP: ", health, " ARMOR: ", armor)
+
+    if health <= 0:
+        defeated = true
+        velocity = Vector3.ZERO
+        player_defeated.emit()
+        print("PLAYER ELIMINATED")
 
 func reload_weapon() -> void:
+    if defeated:
+        return
     if reloading:
         return
 
