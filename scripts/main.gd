@@ -366,7 +366,7 @@ func _on_aim_changed(active: bool) -> void:
 func create_bot_enemy() -> void:
     var bot := CharacterBody3D.new()
     bot.set_script(BOT_SCRIPT)
-    bot.position = Vector3(6, 0, -10)
+    bot.position = Vector3(8, 0, -4)
     add_child(bot)
     bot.set_player(player)
     bot.connect(
