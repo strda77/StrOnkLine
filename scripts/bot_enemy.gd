@@ -54,13 +54,14 @@ func create_enemy() -> void:
     health_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
     add_child(health_label)
 
-
 func set_player(target: Node3D) -> void:
     player = target
 
 func get_avoidance_direction(direction: Vector3) -> Vector3:
-    var space_state := get_world_3d().direct_space_state
+    if not is_instance_valid(player):
+        return direction
 
+    var space_state := get_world_3d().direct_space_state
     var origin := global_position + Vector3.UP
     var destination := origin + direction * 2.5
 
