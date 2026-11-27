@@ -147,6 +147,7 @@ func _physics_process(delta: float) -> void:
         direction = get_avoidance_direction(direction)
 
         velocity.x = direction.x * MOVE_SPEED
+        velocity.z = direction.z * MOVE_SPEED
 
         if direction.length() > 0.01:
             look_at(
