@@ -152,6 +152,8 @@ func _physics_process(delta: float) -> void:
     if not is_instance_valid(player):
         velocity.x = 0.0
         velocity.z = 0.0
+        stuck_time = 0.0
+        escape_timer = 0.0
         move_and_slide()
         return
 
@@ -160,6 +162,8 @@ func _physics_process(delta: float) -> void:
     if distance > DETECTION_RANGE:
         velocity.x = 0.0
         velocity.z = 0.0
+        stuck_time = 0.0
+        escape_timer = 0.0
         move_and_slide()
         return
 
@@ -168,6 +172,7 @@ func _physics_process(delta: float) -> void:
 
     if distance > ATTACK_RANGE:
         direction = direction.normalized()
+        direction = get_recovery_direction(delta, direction)
         direction = get_avoidance_direction(direction)
 
         velocity.x = direction.x * MOVE_SPEED
