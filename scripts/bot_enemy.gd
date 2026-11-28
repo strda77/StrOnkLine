@@ -20,6 +20,7 @@ var stuck_time := 0.0
 var last_position := Vector3.ZERO
 var escape_timer := 0.0
 var escape_direction := Vector3.ZERO
+var recovery_cooldown := 0.0
 
 var body_mesh: MeshInstance3D
 var health_label: Label3D
@@ -118,15 +119,15 @@ func get_avoidance_direction(direction: Vector3) -> Vector3:
     return avoidance.normalized()
 
 func get_recovery_direction(delta: float, direction: Vector3) -> Vector3:
-    escape_timer = maxf(0.0, escape_timer - delta)
+       escape_timer = maxf(0.0, escape_timer - delta)
+       recovery_cooldown = maxf(0.0, recovery_cooldown - delta)
 
     if escape_timer > 0.0:
         return escape_direction.normalized()
 
     if direction.length() < 0.01:
         return Vector3.ZERO
-
-    stuck_check_timer += delta
+     stuck_check_timer += delta
 
     if stuck_check_timer >= 0.6:
         var moved := global_position.distance_to(last_position)
