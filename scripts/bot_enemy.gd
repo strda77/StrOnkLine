@@ -212,6 +212,12 @@ func _physics_process(delta: float) -> void:
         move_and_slide()
         return
 
+    if player.get("defeated") == true:
+       velocity.x = 0.0
+       velocity.z = 0.0
+       move_and_slide()
+       return
+
     var distance := global_position.distance_to(player.global_position)
 
     if distance > DETECTION_RANGE:
