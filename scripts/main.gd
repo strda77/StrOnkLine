@@ -447,6 +447,6 @@ func _on_bot_defeated() -> void:
     await get_tree().create_timer(3.0).timeout
 
     if not is_inside_tree() or match_ended:
-    return
+       return
 
     create_bot_enemy()
