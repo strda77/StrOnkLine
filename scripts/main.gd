@@ -14,6 +14,7 @@ var hp_label: Label
 var armor_label: Label
 var kill_count_label: Label
 var bot_kills := 0
+var bot_enemy: CharacterBody3D
 
 
 
@@ -375,15 +376,15 @@ func _on_aim_changed(active: bool) -> void:
         )
 
 func create_bot_enemy() -> void:
-    var bot := CharacterBody3D.new()
-    bot.set_script(BOT_SCRIPT)
-    bot.position = Vector3(8, 0, -4)
-    add_child(bot)
-    bot.set_player(player)
-    bot.connect(
-    "enemy_defeated",
-    Callable(self, "_on_bot_defeated")
-)
+    bot_enemy = CharacterBody3D.new()
+    bot_enemy.set_script(BOT_SCRIPT)
+    bot_enemy.position = Vector3(8, 0, -4)
+    add_child(bot_enemy)
+    bot_enemy.set_player(player)
+    bot_enemy.connect(
+        "enemy_defeated",
+        Callable(self, "_on_bot_defeated")
+    )
 
 func create_training_target() -> void:
     var target := StaticBody3D.new()
@@ -427,6 +428,7 @@ func _on_player_defeated() -> void:
             "font_color", Color(1.0, 0.2, 0.2)
         )
 
+
 func _on_bot_defeated() -> void:
     bot_kills += 1
 
@@ -438,3 +440,13 @@ func _on_bot_defeated() -> void:
         status_label.add_theme_color_override(
             "font_color", Color(0.35, 1.0, 0.35)
         )
+
+    if is_instance_valid(bot_enemy):
+        bot_enemy.queue_free()
+
+    await get_tree().create_timer(3.0).timeout
+
+    if not is_inside_tree():
+        return
+
+    create_bot_enemy()
