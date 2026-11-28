@@ -118,16 +118,21 @@ func get_avoidance_direction(direction: Vector3) -> Vector3:
 
     return avoidance.normalized()
 
+
 func get_recovery_direction(delta: float, direction: Vector3) -> Vector3:
-       escape_timer = maxf(0.0, escape_timer - delta)
-       recovery_cooldown = maxf(0.0, recovery_cooldown - delta)
+    escape_timer = maxf(0.0, escape_timer - delta)
+    recovery_cooldown = maxf(0.0, recovery_cooldown - delta)
 
     if escape_timer > 0.0:
         return escape_direction.normalized()
 
+    if recovery_cooldown > 0.0:
+        return direction
+
     if direction.length() < 0.01:
         return Vector3.ZERO
-     stuck_check_timer += delta
+
+    stuck_check_timer += delta
 
     if stuck_check_timer >= 0.6:
         var moved := global_position.distance_to(last_position)
@@ -143,19 +148,20 @@ func get_recovery_direction(delta: float, direction: Vector3) -> Vector3:
     if stuck_time >= 1.5:
         stuck_time = 0.0
         escape_timer = 1.0
+        recovery_cooldown = 2.5
 
         var side := Vector3(-direction.z, 0.0, direction.x)
         var forward := direction * 0.5
 
         if randf() < 0.5:
             escape_direction = (forward + side).normalized()
-        
         else:
-            escape_direction = -side
+            escape_direction = (forward - side).normalized()
 
         return escape_direction
 
     return direction
+
 
 func take_damage(amount: int) -> void:
     if defeated or amount <= 0:
@@ -201,6 +207,7 @@ func _physics_process(delta: float) -> void:
         stuck_time = 0.0
         stuck_check_timer = 0.0
         escape_timer = 0.0
+        recovery_cooldown = 0.0
         last_position = global_position
         move_and_slide()
         return
@@ -213,6 +220,7 @@ func _physics_process(delta: float) -> void:
         stuck_time = 0.0
         stuck_check_timer = 0.0
         escape_timer = 0.0
+        recovery_cooldown = 0.0
         last_position = global_position
         move_and_slide()
         return
@@ -243,6 +251,7 @@ func _physics_process(delta: float) -> void:
         stuck_time = 0.0
         stuck_check_timer = 0.0
         escape_timer = 0.0
+        recovery_cooldown = 0.0
         look_at(
             Vector3(
                 player.global_position.x,
