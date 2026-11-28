@@ -16,6 +16,7 @@ var kill_count_label: Label
 var bot_kills := 0
 var bot_enemy: CharacterBody3D
 var match_ended := false
+var retry_button: Button
 
 func _ready() -> void:
     create_ground()
@@ -422,12 +423,70 @@ func _on_vitals_changed(current_health: int, current_armor: int) -> void:
 
 func _on_player_defeated() -> void:
     match_ended = true
+    if retry_button != null:
+        return
 
     if is_instance_valid(status_label):
         status_label.text = "YOU ARE ELIMINATED"
         status_label.add_theme_color_override(
             "font_color", Color(1.0, 0.2, 0.2)
         )
+
+    var hud := get_node_or_null("GameHUD") as CanvasLayer
+
+    if not is_instance_valid(hud):
+        return
+
+    var game_over_label := Label.new()
+    var overlay := ColorRect.new()
+    overlay.color = Color(0.0, 0.0, 0.0, 0.65)
+    overlay.set_anchors_and_offsets_preset(
+        Control.PRESET_FULL_RECT
+    )
+    overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    hud.add_child(overlay)
+
+    game_over_label.text = "GAME OVER"
+    game_over_label.anchor_left = 0.5
+    game_over_label.anchor_top = 0.5
+    game_over_label.anchor_right = 0.5
+    game_over_label.anchor_bottom = 0.5
+    game_over_label.offset_left = -120
+    game_over_label.offset_top = -60
+    game_over_label.offset_right = 120
+    game_over_label.offset_bottom = -10
+    game_over_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    game_over_label.add_theme_font_size_override("font_size", 32)
+    game_over_label.add_theme_color_override(
+        "font_color", Color(1.0, 0.2, 0.2)
+    )
+    hud.add_child(game_over_label)
+
+    retry_button = Button.new()
+    retry_button.text = "RETRY"
+    retry_button.custom_minimum_size = Vector2(180, 70)
+    retry_button.add_theme_font_size_override("font_size", 24)
+    retry_button.add_theme_color_override(
+        "font_color", Color(1.0, 1.0, 1.0)
+    )
+    retry_button.add_theme_color_override(
+        "font_hover_color", Color(1.0, 0.75, 0.3)
+    )
+    retry_button.anchor_left = 0.5
+    retry_button.anchor_top = 0.5
+    retry_button.anchor_right = 0.5
+    retry_button.anchor_bottom = 0.5
+    retry_button.offset_left = -90
+    retry_button.offset_top = 40
+    retry_button.offset_right = 90
+    retry_button.offset_bottom = 110
+
+    hud.add_child(retry_button)
+    retry_button.pressed.connect(_on_retry_pressed)
+
+
+func _on_retry_pressed() -> void:
+    get_tree().reload_current_scene()
 
 func _on_bot_defeated() -> void:
     bot_kills += 1
@@ -444,7 +503,7 @@ func _on_bot_defeated() -> void:
     if is_instance_valid(bot_enemy):
         bot_enemy.queue_free()
 
-    await get_tree().create_timer(3.0).timeout
+       await get_tree().create_timer(3.0).timeout
 
     if not is_inside_tree() or match_ended:
        return
