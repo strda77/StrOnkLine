@@ -15,8 +15,7 @@ var armor_label: Label
 var kill_count_label: Label
 var bot_kills := 0
 var bot_enemy: CharacterBody3D
-
-
+var match_ended := false
 
 func _ready() -> void:
     create_ground()
@@ -422,12 +421,13 @@ func _on_vitals_changed(current_health: int, current_armor: int) -> void:
 
 
 func _on_player_defeated() -> void:
+    match_ended = true
+
     if is_instance_valid(status_label):
         status_label.text = "YOU ARE ELIMINATED"
         status_label.add_theme_color_override(
             "font_color", Color(1.0, 0.2, 0.2)
         )
-
 
 func _on_bot_defeated() -> void:
     bot_kills += 1
@@ -446,7 +446,7 @@ func _on_bot_defeated() -> void:
 
     await get_tree().create_timer(3.0).timeout
 
-    if not is_inside_tree():
-        return
+    if not is_inside_tree() or match_ended:
+    return
 
     create_bot_enemy()
