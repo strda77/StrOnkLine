@@ -12,6 +12,8 @@ var status_label: Label
 var hit_marker: Label
 var hp_label: Label
 var armor_label: Label
+var kill_count_label: Label
+var bot_kills := 0
 
 
 
@@ -298,6 +300,15 @@ func create_hud() -> void:
 
     _on_vitals_changed(100, 100)
 
+    kill_count_label = Label.new()
+    kill_count_label.text = "KILLS  0"
+    kill_count_label.position = Vector2(25, 155)
+    kill_count_label.add_theme_font_size_override("font_size", 20)
+    kill_count_label.add_theme_color_override(
+    "font_color", Color(1.0, 0.65, 0.25)
+    )
+    layer.add_child(kill_count_label)
+
     ammo_label = Label.new()
     ammo_label.text = "AMMO  30 / 120"
     ammo_label.anchor_left = 1.0
@@ -415,7 +426,13 @@ func _on_player_defeated() -> void:
         status_label.add_theme_color_override(
             "font_color", Color(1.0, 0.2, 0.2)
         )
+
 func _on_bot_defeated() -> void:
+    bot_kills += 1
+
+    if is_instance_valid(kill_count_label):
+        kill_count_label.text = "KILLS  %d" % bot_kills
+
     if is_instance_valid(status_label):
         status_label.text = "ENEMY ELIMINATED"
         status_label.add_theme_color_override(
